@@ -6,7 +6,7 @@ public class RequestedAircraft
 {
     public RequestedAircraft(Aircarft aircarft) => Aircarft = aircarft;
 
-    public string? ID => Aircarft.Id;
+    public string ID => Aircarft.Id;
 
     public int Count { get; set; } = 0;
 

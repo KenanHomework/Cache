@@ -32,6 +32,7 @@ public sealed class WolfCacheRequestService
         return new Request()
         {
             ClientName = Dns.GetHostName(),
+            ClientIpAddress= GetDeviceIpAddress(),
             Pair = new KeyValuePair<string, string>(key, string.Empty),
             RequestType = RequestType.GET
         };

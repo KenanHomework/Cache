@@ -68,8 +68,6 @@ public sealed class SqLiteServer
         string input;
         Request request = new();
 
-        Console.WriteLine("ReceiveCommand()");
-
         try
         {
             input = BinaryReader.ReadString();
@@ -132,7 +130,7 @@ public sealed class SqLiteServer
 
         try
         {
-            Service.Get(request.RequestData);
+            aircarft = Service.Get(request.RequestData);
         }
         catch (Exception exception)
         {
@@ -146,7 +144,7 @@ public sealed class SqLiteServer
             return;
         }
 
-        SendSuccesResponse(aircarft);
+        SendSuccesResponse(JsonSerializer.Serialize(aircarft));
 
     }
 
@@ -160,7 +158,7 @@ public sealed class SqLiteServer
             return;
         }
 
-        BinaryWriter.Write(JsonSerializer.Serialize(aircarfts));
+        SendSuccesResponse(JsonSerializer.Serialize(aircarfts));
         ConsoleHelper.ShowStatus(ResultStatus.Succes);
     }
 
@@ -184,7 +182,7 @@ public sealed class SqLiteServer
             return;
         }
 
-        SendSuccesResponse(aircarft);
+        SendSuccesResponse(JsonSerializer.Serialize(aircarft));
     }
 
     public void PutRequest(Request request)
@@ -208,7 +206,7 @@ public sealed class SqLiteServer
             return;
         }
 
-        SendSuccesResponse(aircarft);
+        SendSuccesResponse(JsonSerializer.Serialize(aircarft));
 
     }
 
@@ -250,25 +248,20 @@ public sealed class SqLiteServer
 
         BinaryWriter.Write(JsonSerializer.Serialize(response));
         ConsoleHelper.ShowStatus(ResultStatus.Failed, message);
-
-        Client.Close();
-
     }
 
-    void SendSuccesResponse(Aircarft aircarft)
+    void SendSuccesResponse(string responseString)
     {
+        ArgumentNullException.ThrowIfNull(responseString, nameof(responseString));
+
         Response response = new Response()
         {
-            ResponseData = JsonSerializer.Serialize(aircarft),
+            ResponseData = responseString,
             Result = ResultStatus.Succes
         };
 
         BinaryWriter.Write(JsonSerializer.Serialize(response));
         ConsoleHelper.ShowStatus(ResultStatus.Succes);
-
-        Client.Close();
-
-
     }
 
     void SendSuccesResponse()
@@ -280,8 +273,6 @@ public sealed class SqLiteServer
 
         BinaryWriter.Write(JsonSerializer.Serialize(response));
         ConsoleHelper.ShowStatus(ResultStatus.Succes);
-
-        Client.Close();
 
     }
 

@@ -12,6 +12,7 @@ using API.Models;
 using System.Collections.Immutable;
 using SqlLiteService.Services;
 using WolfCache.Services;
+using System.IO;
 
 namespace API;
 
@@ -82,11 +83,15 @@ public sealed class AircraftAPI
 
         response = SendRequestToWolfCache(WolfCacheRequestService.GetCommand(id));
 
+
         if (response is not null
-            && response.Result == ResultStatus.Succes) return response;
+            && response.Result == ResultStatus.Succes)
+        {
+            AddAircraftAndSyncCache(response.ResponseData);
+            return response;
+        }
 
         response = SendRequestToSqLiteServer(SqLiteRequestService.GetCommand(id));
-
         AddAircraftAndSyncCache(response.ResponseData);
         return response;
     }
@@ -130,24 +135,25 @@ public sealed class AircraftAPI
 
     #region Helper Methods
     /* Connection Servers */
-    public Response SendRequestToWolfCache(Request request) => SendRequestToServer(request, WolfCacheBinaryWriter,WolfCacheBinaryReader);
+    public Response SendRequestToWolfCache(Request request) => SendRequestToServer(request, WolfCacheBinaryWriter, WolfCacheBinaryReader);
 
-    public Response SendRequestToSqLiteServer(Request request) => SendRequestToServer(request, SqLiteBinaryWriter,SqLiteBinaryReader);
+    public Response SendRequestToSqLiteServer(Request request) => SendRequestToServer(request, SqLiteBinaryWriter, SqLiteBinaryReader);
 
-    public static Response SendRequestToServer(Request request, BinaryWriter binaryWriter , BinaryReader binaryReader)
+    public static Response SendRequestToServer(Request request, BinaryWriter binaryWriter, BinaryReader binaryReader)
     {
         ArgumentNullException.ThrowIfNull(nameof(request));
-
-        binaryWriter.Write(JsonSerializer.Serialize(request));
-
-        string responseString = binaryReader.ReadString();
-
-
-        if (string.IsNullOrWhiteSpace(responseString))
-            return new Response() { Result = ResultStatus.Failed };
-
         try
         {
+
+            binaryWriter.Write(JsonSerializer.Serialize(request));
+
+            string responseString = binaryReader.ReadString();
+
+
+            if (string.IsNullOrWhiteSpace(responseString))
+                return new Response() { Result = ResultStatus.Failed };
+
+
 #pragma warning disable CS8603 // Possible null reference return.
             return JsonSerializer.Deserialize<Response>(responseString);
 #pragma warning restore CS8603 // Possible null reference return.
@@ -173,16 +179,12 @@ public sealed class AircraftAPI
 
         var aircrafts = RequestedAircraftCache.GetAndClearReadyForCacheAircrafts();
 
-        foreach (var aircraft in aircrafts)
-        {
-            Request request = new Request()
-            {
-                RequestType = RequestType.PUT,
-                Pair = new KeyValuePair<string, string>(aircarft.Id, JsonSerializer.Serialize(aircraft.Aircarft))
-            };
+        if (aircrafts is null) return;
 
-            SendRequestToWolfCache(request);
-        }
+        aircrafts.ForEach(a =>
+        {
+            SendRequestToWolfCache(WolfCacheRequestService.PutCommand(a.ID, JsonSerializer.Serialize(a.Aircarft)));
+        });
 
     }
 

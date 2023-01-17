@@ -27,9 +27,9 @@ public class RequestedAircraftCache
 
     public List<RequestedAircraft>? GetAndClearReadyForCacheAircrafts()
     {
-        var aircrafts = Requesteds.FindAll(ra => ra.Count >= 3);
+        var aircrafts = Requesteds.FindAll(ra => ra.Count >= 2);
 
-        Requesteds.RemoveAll(ra => ra.Count >= 3);
+        Requesteds.RemoveAll(ra => ra.Count >= 2);
 
         return aircrafts;
     }

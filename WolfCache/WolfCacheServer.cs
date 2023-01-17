@@ -129,14 +129,14 @@ public sealed class WolfCacheServer
         if (DBIsEmpty())
             return;
 
-        DB.ForEach(pair =>
+        foreach (var dbPair in DB)
         {
-            if (pair.Key.Equals(pair.Key))
-            {
-                SendSuccesResponse(pair);
-                return;
-            }
-        });
+            if (!dbPair.Key.Equals(pair.Key))
+                continue;
+
+            SendSuccesResponse(pair);
+            return;
+        }
 
         SendFailedResponse("key not found");
 
